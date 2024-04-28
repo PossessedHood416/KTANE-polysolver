@@ -141,7 +141,13 @@ public class polysolver : MonoBehaviour {
       for(int i = 0; i < 6; i++){
          
          //how tf do i optimize this into smthn like a dropdown
-         Debug.LogFormat("[Polynomial Solver #{0}] Checking polynomial: {1} vs {2}", ModuleId, Submission[i], Polynomial[i]);
+         if(Polynomial[i] != 8){
+            if(Submission[i] != 8){   
+               Debug.LogFormat("[Polynomial Solver #{0}] Checking polynomial: {1} vs {2}", ModuleId, Submission[i], Polynomial[i]);
+            } else {
+               Debug.LogFormat("[Polynomial Solver #{0}] Error, too few coefficients were entered, striking :P", ModuleId);
+            }
+         }
 
          if(Submission[i] != Polynomial[i]){
             Good = false;
@@ -340,6 +346,7 @@ public class polysolver : MonoBehaviour {
    }
 
    IEnumerator TwitchHandleForcedSolve () {
+      yield return null;
       
       while (!ModuleSolved)
       {
@@ -371,7 +378,6 @@ public class polysolver : MonoBehaviour {
 
       }
       
-      yield return null;
    }
 
 }
