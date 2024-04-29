@@ -186,10 +186,11 @@ public class polysolver : MonoBehaviour {
 
       //zen kinda fucks up the displays bc of how they change w/ the timer. I'm 98% sure this fixes it with slightly more spaghetti code
       //also trainingmode hotfix (thanks vflyer tp stream)
-      if (!ZenModeActive || Bomb.GetTime() < 1){
-         Zen = 1;
-      } else {
+      //dumbass me fucked up this in the Rv1.0.3 hotfix
+      if (ZenModeActive || Bomb.GetTime() < 1){
          Zen = -1;
+      } else {
+         Zen = 1;
       }
       
       DisplayText.text = "STAGE1";
