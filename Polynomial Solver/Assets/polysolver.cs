@@ -70,7 +70,7 @@ public class polysolver : MonoBehaviour {
             for(int j = 0; j <= 6; j++){
 
                if ((j > Stage && j!=8) || j == 8){
-                  //the fuckin fnaf1 Lignt Not Working sfx :D
+                  //the fuckin fnaf1 Light Not Working sfx :D
                   Audio.PlaySoundAtTransform("Error", Bun.transform);
                   break;
                }
@@ -185,7 +185,8 @@ public class polysolver : MonoBehaviour {
       ModuleSolved = false;
 
       //zen kinda fucks up the displays bc of how they change w/ the timer. I'm 98% sure this fixes it with slightly more spaghetti code
-      if (!ZenModeActive){
+      //also trainingmode hotfix (thanks vflyer tp stream)
+      if (!ZenModeActive || Bomb.GetTime() < 1){
          Zen = 1;
       } else {
          Zen = -1;
