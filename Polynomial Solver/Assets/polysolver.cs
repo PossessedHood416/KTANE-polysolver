@@ -184,11 +184,10 @@ public class polysolver : MonoBehaviour {
    void Activate () { //Shit that should happen when the bomb arrives (factory)/Lights turn on
       ModuleSolved = false;
 
-      //zen kinda fucks up the displays bc of how they change w/ the timer. I'm 98% sure this fixes it with slightly more spaghetti code
-      //also trainingmode hotfix (thanks vflyer tp stream)
-      //dumbass me fucked up this in the Rv1.0.3 hotfix
-      if (ZenModeActive || Bomb.GetTime() < 1){
+      //gamemodes where timer goes up instead of down kinda screw with the mod, this may or may not work on tp training mode
+      if (ZenModeActive){
          Zen = -1;
+         Debug.LogFormat("[Polynomial Solver #{0}] Zen(like) mode detected.", ModuleId);
       } else {
          Zen = 1;
       }
@@ -238,7 +237,7 @@ public class polysolver : MonoBehaviour {
 
    void MakePoly (int Stage) {
       
-      Debug.LogFormat("[Polynomial Solver #{0}] Generating polynomial for stage {1} (degree {2}). Coefficiants are:", ModuleId, Stage, Stage+1);
+      Debug.LogFormat("[Polynomial Solver #{0}] Generating polynomial for stage {1} (degree {1}). Coefficiants are:", ModuleId, Stage);
       
       for(int i = 0; i<= Stage; i++){
 
