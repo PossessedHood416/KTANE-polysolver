@@ -39,6 +39,7 @@ public class polysolver : MonoBehaviour {
    int ModuleId;
    private bool ModuleSolved;
 
+
    void Awake () { //Avoid doing calculations in here regarding edgework. Just use this for setting up buttons for simplicity.
       ModuleId = ModuleIdCounter++;
       GetComponent<KMBombModule>().OnActivate += Activate;
@@ -55,7 +56,6 @@ public class polysolver : MonoBehaviour {
       ButtonE.OnInteract += delegate () { ButtonEPress(); return false; };
 
    }
-
    void Button8Press (KMSelectable Bun){
       
       Bun.AddInteractionPunch();
@@ -91,7 +91,6 @@ public class polysolver : MonoBehaviour {
                
                }
             }
-
          }
       }
    }
@@ -145,7 +144,9 @@ public class polysolver : MonoBehaviour {
             if(Submission[i] != 8){   
                Debug.LogFormat("[Polynomial Solver #{0}] Checking polynomial: {1} vs {2}", ModuleId, Submission[i], Polynomial[i]);
             } else {
-               Debug.LogFormat("[Polynomial Solver #{0}] Error, too few coefficients were entered, striking :P", ModuleId);
+               Debug.LogFormat("[Polynomial Solver #{0}] Error, too few coefficients were entered, striking...", ModuleId);
+               Good = false;
+               break;
             }
          }
 
@@ -176,65 +177,75 @@ public class polysolver : MonoBehaviour {
          Submission[i] = 8;
       }
    }
-
    void OnDestroy () { //Shit you need to do when the bomb ends
-
+      //Eltrick reads this
    }
-
    void Activate () { //Shit that should happen when the bomb arrives (factory)/Lights turn on
+      
       ModuleSolved = false;
 
-      //gamemodes where timer goes up instead of down kinda screw with the mod, this may or may not work on tp training mode
-      if (ZenModeActive){
-         Zen = -1;
-         Debug.LogFormat("[Polynomial Solver #{0}] Zen(like) mode detected.", ModuleId);
-      } else {
+      //zen kinda fucks up the displays bc of how they change w/ the timer. I'm 80% sure this fixes it with more spaghetti code
+      if (!ZenModeActive){
          Zen = 1;
+         Debug.LogFormat("[Polynomial Solver #{0}] Detected timer ticking down.", ModuleId);
+      } else {
+         Zen = -1;
+         Debug.LogFormat("[Polynomial Solver #{0}] Detected timer ticking up.", ModuleId);
       }
       
       DisplayText.text = "STAGE1";
       Sign = "+";
       Stage = 1;
+      
+      //idk how, but if i change this line in anyway whatsoever, the display breaks, but this line might also be a reason the mod breaks on tp training aghghgh
       Cooldown = (int)Bomb.GetTime()-(2*Zen);
 
       MakePoly(Stage);
    }
-
    void Start () { //Shit that you calculate, usually a majority if not all of the module
-
+      //Eltrick also reads this
    }
-
    void Update () { //Shit that happens at any point after initialization
 
-      //Xvalue loops from 0 to (Stage+1) [inc] via bomb timer like fmzn
-      Xvalue = Modulo((int)(Bomb.GetTime()*-1*Zen), (Stage + 2));
+      if(!ModuleSolved){
+         
+         //Xvalue loops from 0 to (Stage+1) [inc] via bomb timer like fmzn
+         Xvalue = Modulo((int)(Bomb.GetTime()*-1*Zen), (Stage + 2));
 
-      //if mod strikes/solves, it waits to continue to a different display
-      if(Cooldown*Zen > Bomb.GetTime()*Zen && !ModuleSolved){
-         if (Xvalue == 0){
-            DisplayText.text = "";
-         } else {
-            DisplayText.text = (Calc(Xvalue)).ToString();
+         //if mod strikes/solves, it waits to continue to a different display
+         if(Cooldown*Zen > Bomb.GetTime()*Zen){
+            
+            if (Xvalue == 0){
+               DisplayText.text = "";
+            } else {
+               DisplayText.text = (Calc(Xvalue)).ToString();
+            }
+
+         //hopefully the following code fixes all of my problems :prayge:
+         //this code bumps the cooldown to end closer to bombtime if its too far away
+         } else if(Cooldown - 5 > Bomb.GetTime()){
+            Cooldown = (int)Bomb.GetTime()+2;
+         } else if(Cooldown + 5 < Bomb.GetTime()){
+            Cooldown = (int)Bomb.GetTime()-2;
          }
-      } else if (Cooldown*Zen > Bomb.GetTime()*Zen && ModuleSolved){
+      
+      } else
+      if (Cooldown*Zen > Bomb.GetTime()*Zen){
          DisplayText.text = "";
       }
 
    }
-
    void Solve () {
       GetComponent<KMBombModule>().HandlePass();
       ModuleSolved = true;
       Cooldown = (int)Bomb.GetTime()-(2*Zen);
       DisplayText.text = SolveTxt[Rnd.Range(0,SolveTxt.Length)];
    }
-
    void Strike () {
       GetComponent<KMBombModule>().HandleStrike();
       Cooldown = (int)Bomb.GetTime()-(2*Zen);
       DisplayText.text = StrikeTxt[Rnd.Range(0,StrikeTxt.Length)];
    }
-
    void MakePoly (int Stage) {
       
       Debug.LogFormat("[Polynomial Solver #{0}] Generating polynomial for stage {1} (degree {1}). Coefficiants are:", ModuleId, Stage);
@@ -254,7 +265,6 @@ public class polysolver : MonoBehaviour {
       }
 
    }
-
    int Calc (int x){
 
       int Total = 0;
@@ -268,7 +278,6 @@ public class polysolver : MonoBehaviour {
       return Total;
 
    }
-
    int Pow (int x, int y){
 
       int Total = 1;
@@ -280,17 +289,15 @@ public class polysolver : MonoBehaviour {
       return Total;
 
    }
-
    int Modulo (int num, int mod){
       //stupid c# not having good modulo
       return ((num % mod) + mod) % mod;
    }
 
-//i have little idea what im doing, lmk if i need to make changes
+//if youre reading this and the display isn't changing on tp training modes, then blame tp :P
 #pragma warning disable 414
    private readonly string TwitchHelpMessage = @"Use '!{0} + 0 1 2 3 - 4 5 6 7 E R' to press those buttons. Chain with spaces.";
 #pragma warning restore 414
-
    IEnumerator ProcessTwitchCommand (string Command) {
         
         Command = Command.Trim().ToUpper();
@@ -343,14 +350,16 @@ public class polysolver : MonoBehaviour {
 
         }
 
-
    }
-
    IEnumerator TwitchHandleForcedSolve () {
       yield return null;
+
+      Debug.LogFormat("[Polynomial Solver #{0}] TP autosolver activated, solving module.", ModuleId);
       
       while (!ModuleSolved)
       {
+
+
          ButtonR.OnInteract();
 
          for(int i = 0; i < 6; i++){
@@ -380,5 +389,4 @@ public class polysolver : MonoBehaviour {
       }
       
    }
-
 }
