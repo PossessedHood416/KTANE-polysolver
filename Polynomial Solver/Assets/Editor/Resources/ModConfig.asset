@@ -18,6 +18,6 @@ MonoBehaviour:
     coeffecients of standard polynomials that the module generates.\n\nMade by PossessedHood416.\n\nThe
     manual can be found in the manuals folder of the game or at ktane.timwi.de.\n\r\nContact
     possessedhood416 on Discord if there are any bugs or errors in manual."
-  version: RELEASE v1.0.5
+  version: v1.0.5
   outputFolder: build
   previewImage: {fileID: 2800000, guid: 196e13e4b0da22b41864409f71fd4121, type: 3}
