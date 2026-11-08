@@ -1,5 +1,3 @@
-//if youre reading this pls tell me how to fix my mod (if i should) and also general optimizations :)
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,7 +6,7 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using KModkit;
 using Rnd = UnityEngine.Random;
-using Math = ExMath;
+//using Math = ExMath;
 
 public class polysolver : MonoBehaviour {
 
@@ -21,16 +19,25 @@ public class polysolver : MonoBehaviour {
 	public KMSelectable ButtonE;
 	public TextMesh DisplayText;
 
-	int Xvalue;
+	public GameObject[] SignIndicator;
+	public Material[] SignMat;
+
+	private string[] SolveTxt = {"UH-HUH","RIGHT!","[COOL]","YIPPEE","[OKAY]","GUDJOB","YESSIR","GOT IT","GAMER!","SOLVED","!!!!!!","RADGE."," YES. ","GREAT!","[EPIC]","NICEON","YOUWIN"};
+	private string[] StrikeTxt= {"NUH-UH","WRONG!","[LMAO]","DCOLON","[BRUH]","GITGUD","[NOPE]","FALSE!","STUPID","STRIKE","??????","SADGE.","OH NO.","HUH?!?","GUH!?!","LAME-O","PRESSF"};
+	
+	private int Zen;
 	private bool ZenModeActive;
-	int Zen;
-	string[] SolveTxt	= {"UH-HUH","RIGHT!","[COOL]","YIPPEE","[OKAY]","GUDJOB","YESSIR","GOT IT","GAMER!","SOLVED","!!!!!!","RADGE."," YES. ","GREAT!","[EPIC]","NICEON","YOUWIN"};
-	string[] StrikeTxt	= {"NUH-UH","WRONG!","[LMAO]","DCOLON","[BRUH]","GITGUD","[NOPE]","FALSE!","STUPID","STRIKE","??????","SADGE.","OH NO.","HUH?!?","GUH!?!","LAME-O","PRESSF"};
+	
 	private List<int> Polynomial = new List<int>();
 	private List<int> Submission = new List<int>();
+	
+	//for Souvenir, [stage-1][displayIndex-1] = displayed num
+	private int[][] Displays = new int[5][];
+	
 	private int Stage;
 	private string Sign;
 	private int Cooldown;
+
 	static int ModuleIdCounter = 1;
 	int ModuleId;
 	private bool ModuleSolved = false;
@@ -61,7 +68,6 @@ public class polysolver : MonoBehaviour {
 
 		Submission.Add(i * (Sign == "+" ? 1 : -1));
 		Audio.PlaySoundAtTransform("ButtonPress" + (Submission.Count).ToString(), Bun.transform);
-		Debug.LogFormat("[Polynomial Solver #{0}] Pressed {1}{2}", ModuleId, Sign, i);
 	}
 
 	void ButtonSPress (KMSelectable Bun){
@@ -70,6 +76,8 @@ public class polysolver : MonoBehaviour {
 
 		if(ModuleSolved) return;
 		Sign = (Bun == ButtonS[0] ? "+" : "-");
+		SignIndicator[0].GetComponent<Renderer>().material = SignMat[Sign == "+" ? 1 : 0];
+		SignIndicator[1].GetComponent<Renderer>().material = SignMat[Sign == "-" ? 1 : 0];
 	}
 
 	void ButtonRPress (){
@@ -78,7 +86,6 @@ public class polysolver : MonoBehaviour {
 		if(ModuleSolved) return;
 
 		Submission.Clear();
-		Debug.LogFormat("[Polynomial Solver #{0}] Input reset.", ModuleId);
 	}
 
 	void ButtonEPress (){
@@ -111,7 +118,7 @@ public class polysolver : MonoBehaviour {
 
 	void Activate () { //Shit that should happen when the bomb arrives (factory)/Lights turn on
 		Zen = (ZenModeActive ? -1 : 1);
-		Debug.LogFormat("[Polynomial Solver #{0}] Detected timer ticking {1}.", ModuleId, (ZenModeActive ? "up" : "down"));
+		Debug.LogFormat("<Polynomial Solver #{0}> Detected timer ticking {1}.", ModuleId, (ZenModeActive ? "up" : "down"));
 
 		DisplayText.text = "STAGE1";
 		Sign = "+";
@@ -124,10 +131,10 @@ public class polysolver : MonoBehaviour {
 	void Update () {
 		if(ModuleSolved) return;
 		
-		Xvalue = Modulo((int)(Bomb.GetTime()*-1*Zen), (Stage + 2));
+		int Xvalue = Modulo((int)(Bomb.GetTime()*-1*Zen), (Stage + 2));
 
 		if(Cooldown*Zen > Bomb.GetTime()*Zen)
-			DisplayText.text = (Xvalue == 0 ? "" : (Calc(Xvalue)).ToString());
+			DisplayText.text = (Xvalue == Stage+1 ? "" : Displays[Stage - 1][Xvalue].ToString());
 
 		else if(Cooldown - 5 > Bomb.GetTime())
 			Cooldown = (int)Bomb.GetTime()+2;
@@ -141,6 +148,8 @@ public class polysolver : MonoBehaviour {
 		ModuleSolved = true;
 		Cooldown = (int)Bomb.GetTime()-(2*Zen);
 		DisplayText.text = SolveTxt[Rnd.Range(0,SolveTxt.Length)];
+		SignIndicator[0].GetComponent<Renderer>().material = SignMat[0];
+		SignIndicator[1].GetComponent<Renderer>().material = SignMat[0];
 	}
 
 	void Strike () {
@@ -150,13 +159,17 @@ public class polysolver : MonoBehaviour {
 	}
 
 	void MakePoly (int Stage) {
-		Debug.LogFormat("[Polynomial Solver #{0}] Generating polynomial for stage {1} (degree {1}).", ModuleId, Stage);
 		Polynomial.Clear();
 	
 		for(int i = 0; i<= Stage; i++) Polynomial.Add(Rnd.Range(-7, 8));
 		while(Polynomial[0] == 0) Polynomial[0] = Rnd.Range(-7, 8);
 
+		Displays[Stage-1] = new int[Polynomial.Count];
+		for (int i = 0; i < Stage + 1; i++) Displays[Stage - 1][i] = Calc(i+1);
+
+		Debug.LogFormat("[Polynomial Solver #{0}] Generating polynomial for stage {1} (degree {1}).", ModuleId, Stage);
 		Debug.LogFormat("[Polynomial Solver #{0}] Coefficients: {1}", ModuleId, String.Join(", ", Polynomial.Select(x => x.ToString()).ToArray()) );
+		Debug.LogFormat("[Polynomial Solver #{0}] Display values: {1}", ModuleId, String.Join(", ", Displays[Stage - 1].Select(x => x.ToString()).ToArray()));
 	}
 
 	int Calc (int x){
@@ -177,42 +190,40 @@ public class polysolver : MonoBehaviour {
 
 //if youre reading this and the display isn't changing on tp training modes, then blame tp :P
 #pragma warning disable 414
-	private readonly string TwitchHelpMessage = @"Use '!{0} + 0 1 2 3 - 4 5 6 7 E R' to press those buttons. Chain with spaces.";
+	private readonly string TwitchHelpMessage = @"Use '!{0} +01 23 - 456 7 ER' to press those buttons. Chain with or without spaces.";
 #pragma warning restore 414
 
 	IEnumerator ProcessTwitchCommand (string Command) {
-		Command = Command.Trim().ToUpper();
-		yield return null;
-		
-		string[] Commands = Command.Split(' ');
+		Command = Command.Trim().ToUpperInvariant().Replace(" ", "");
+		char[] Commands = Command.ToCharArray();
 
-		for (int i = 0; i < Commands.Length; i++) {
-			if (Commands[i].Length != 1) {
-				yield return "sendtochaterror Error: Commands can only be 1 character long, chain with spaces.";
-				yield break;
-			}
-			if (!"01234567+-ER".Contains(Commands[i])) {
-				yield return "sendtochaterror Error: Valid buttons are: 0 1 2 3 4 5 6 7 + - E R.";
+		foreach (char cmd in Commands) {
+			if (!"01234567+-ER".Contains(cmd)){
+				yield return "sendtochaterror Error: Invalid command: " + cmd + ". No buttons pressed.";
 				yield break;
 			}
 		}
+		
+		yield return null;
 
-		for (int i = 0; i < Commands.Length; i++) {
-			if ("01234567".Contains(Commands[i])) {
-				Button8[int.Parse(Commands[i])].OnInteract();
-
-			} else if(Commands[i] == "+") {
-				ButtonS[0].OnInteract();
-
-			} else if(Commands[i] == "-") {
-				ButtonS[1].OnInteract();
-			
-			} else if (Commands[i] == "R"){
-				ButtonR.OnInteract();
-
-			} else if (Commands[i] == "E"){
-				ButtonE.OnInteract();
-
+		foreach (char cmd in Commands) {
+			switch (cmd) {
+				case '0': case '1': case '2': case '3':
+				case '4': case '5': case '6': case '7':
+					Button8[cmd - '0'].OnInteract();
+					break;
+				case '+':
+					ButtonS[0].OnInteract();
+					break;
+				case '-':
+					ButtonS[1].OnInteract();
+					break;
+				case 'R':
+					ButtonR.OnInteract();
+					break;
+				case 'E':
+					ButtonE.OnInteract();
+					break;
 			}
 
 			yield return new WaitForSeconds(.2f);
@@ -225,19 +236,17 @@ public class polysolver : MonoBehaviour {
 		
 		while (!ModuleSolved){
 			ButtonR.OnInteract();
+			yield return new WaitForSeconds(0.2f);
 
 			while(!Polynomial.SequenceEqual(Submission)){
-				yield return new WaitForSeconds(0.3f);
 				
 				int i = Submission.Count;
 
-				if(Polynomial[i] >= 0){
-					ButtonS[0].OnInteract();
-					Button8[Polynomial[i]].OnInteract();
-				} else if (Polynomial[i] < 0){
-					ButtonS[1].OnInteract();
-					Button8[Polynomial[i]*-1].OnInteract();
-				}
+				ButtonS[Polynomial[i] >= 0 ? 0 : 1].OnInteract();
+				yield return new WaitForSeconds(0.2f);
+			
+				Button8[Math.Abs(Polynomial[i])].OnInteract();
+				yield return new WaitForSeconds(0.2f);
 			}
 			
 			ButtonE.OnInteract();
